@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alert History</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: auto;
+            padding: 20px;
+            background-color: #f4f6f8;
+        }
+
+        .navbar,
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.1);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            margin-left: 15px;
+            color: black;
+            font-weight: bold;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .alert.info {
+            background-color: #e3f2fd;
+        }
+
+        .alert.warning {
+            background-color: #fff3cd;
+        }
+
+        .alert.severe {
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <h2>LiveWeather</h2>
+
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/alerts">Alert History</a>
+            <a href="/history">Weather History</a>
+        </div>
+    </nav>
+
+    <div class="card">
+        <h1>Alert History</h1>
+
+        {% if alerts %}
+            {% for alert in alerts %}
+                <div class="alert {{ alert.severity }}">
+                    <strong>{{ alert.title }}</strong><br>
+                    {{ alert.timestamp }}<br>
+                    {{ alert.message }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No alerts found.</p>
+        {% endif %}
+    </div>
+    
+</body>
+</html>

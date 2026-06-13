@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+weather_alerts.db
+logs/
+.env
+.DS_Store

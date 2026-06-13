@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <meta http-equiv="refresh" content="30">
+
+    <title>Live Weather Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: auto;
+            padding: 20px;
+            background-color: #f4f6f8;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .alert.info {
+            background-color: #e3f2fd;
+        }
+
+        .alert.warning {
+            background-color: #fff3cd;
+        }
+
+        .alert.severe {
+            background-color: #f8d7da;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,.1);
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .summary-label {
+            color: gray;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            background: white;
+            padding: 15px 20px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            box-shadow: 0 2px 6px rgba(0,0,0,.1);
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            margin-left: 15px;
+            color: black;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <h2>LiveWeather</h2>
+
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/alerts">Alert History</a>
+            <a href="/history">Weather History</a>
+        </div>
+    </nav>
+
+    <h1>Live Weather Dashboard</h1>
+
+    <form action="/refresh-weather" method="get">
+        <button type="submit" style="margin-bottom: 20px;">
+            Refresh Weather
+        </button>
+    </form>
+
+
+    <div class="card">
+        <h2>{{ weather_icon }} {{ city }}, {{ state }}</h2>
+
+        {% if weather %}
+            <p><strong>Last Updated:</strong> {{ weather[0] }}</p>
+        {% endif %}
+
+        <p><strong>Status:</strong> {{ status_text }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Service Status</h2>
+        <p>
+            Last Weather Update:
+            {{ last_update }}
+        </p>
+    </div>
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+            <div class="summary-value">
+                {{ weather[1] }}°F
+            </div>
+            <div class="summary-label">
+                Temperature
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-value">
+                {{ weather_icon }} {{ weather[2] }}
+            </div>
+            <div class="summary-label">
+                Condition
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-value">
+                {{ weather[5] }}
+            </div>
+            <div class="summary-label">
+                Wind (mph)
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-value">
+                {{ weather[4] }}
+            </div>
+            <div class="summary-label">
+                Precipitation
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+        <h2>Recent Alerts</h2>
+
+        {% for alert in alerts %}
+
+        <div class="alert {{ alert.severity }}">
+            <strong>{{ alert.title }}</strong><br>
+            {{ alert.timestamp }}<br>
+            {{ alert.message }}
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h2>Today's Statistics</h2>
+
+        <div class="summary-grid">
+
+            <div class="summary-card">
+                <div class="summary-value">
+                    {{ stats.high_temp }}°F
+                </div>
+                <div class="summary-label">
+                    High
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-value">
+                    {{ stats.low_temp }}°F
+                </div>
+                <div class="summary-label">
+                    Low
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-value">
+                    {{ stats.avg_temp }}°F
+                </div>
+                <div class="summary-label">
+                    Average
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-value">
+                    {{ stats.max_wind }}
+                </div>
+                <div class="summary-label">
+                    Max Wind (mph)
+                </div>
+            </div>
+
+        </div>
+
+        <br>
+
+        <p>
+            <strong>Alerts Today:</strong>
+            {{ stats.alert_count }}
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>Forecast Temperature</h2>
+        <canvas id="forecastTempChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Forecast Rain Chance</h2>
+        <canvas id="forecastRainChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>24-Hour Forecast</h2>
+
+        <table width="100%">
+            <tr>
+                <th align="left">Time</th>
+                <th align="left">Temp</th>
+                <th align="left">Rain Chance</th>
+                <th align="left">Condition</th>
+            </tr>
+
+            {% for item in forecast %}
+                <tr>
+                    <td>{{ item[0].split("T")[1] }}</td>
+                    <td>{{ item[1] }}°F</td>
+                    <td>{{ item[2] }}%</td>
+                    <td>{{ item[3] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+
+    <div class="card">
+        <h2>Temperature History</h2>
+
+        <canvas id="temperatureChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Wind Speed History</h2>
+        <canvas id="windChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Precipitation History</h2>
+        <canvas id="precipitationChart"></canvas>
+    </div>
+
+   <script>
+    const labels = {{ labels | tojson }};
+    const temperatures = {{ temperatures | tojson }};
+
+    new Chart(
+        document.getElementById("temperatureChart"),
+        {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Temperature (°F)",
+                        data: temperatures,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true
+            }
+        }
+    );
+    </script>
+
+    <script>
+    const windSpeeds = {{ wind_speeds | tojson }};
+    const precipitations = {{ precipitations | tojson }};
+
+    new Chart(
+        document.getElementById("windChart"),
+        {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Wind Speed (mph)",
+                        data: windSpeeds,
+                        tension: 0.3
+                    }
+                ]
+            }
+        }
+    );
+
+    new Chart(
+        document.getElementById("precipitationChart"),
+        {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Precipitation",
+                        data: precipitations,
+                        tension: 0.3
+                    }
+                ]
+            }
+        }
+    );
+    </script>
+
+    <script>
+    const forecastLabels = {{ forecast_labels | tojson }};
+    const forecastTemps = {{ forecast_temps | tojson }};
+
+    new Chart(
+        document.getElementById("forecastTempChart"),
+        {
+            type: "line",
+            data: {
+                labels: forecastLabels,
+                datasets: [
+                    {
+                        label: "Forecast Temperature (°F)",
+                        data: forecastTemps,
+                        tension: 0.3
+                    }
+                ]
+            }
+        }
+    );
+    </script>
+
+    <script>
+    const forecastRain = {{ forecast_rain | tojson }};
+
+    new Chart(
+        document.getElementById("forecastRainChart"),
+        {
+            type: "line",
+            data: {
+                labels: forecastLabels,
+                datasets: [
+                    {
+                        label: "Rain Chance (%)",
+                        data: forecastRain,
+                        tension: 0.3
+                    }
+                ]
+            }
+        }
+    );
+    </script>
+
+</body>
+</html>
