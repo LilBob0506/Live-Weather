@@ -98,6 +98,7 @@
 
 <body>
 
+    <!------------------------------------------ Navbar ------------------------------------------------->
     <nav class="navbar">
         <h2>LiveWeather</h2>
 
@@ -108,8 +109,10 @@
         </div>
     </nav>
 
+
     <h1>Live Weather Dashboard</h1>
 
+    <!------------------------------------------ Refresh Button ------------------------------------------------->
     <form action="/refresh-weather" method="get">
         <button type="submit" style="margin-bottom: 20px;">
             Refresh Weather
@@ -117,24 +120,18 @@
     </form>
 
 
+    <!------------------------------------------ Header ------------------------------------------------->
     <div class="card">
         <h2>{{ weather_icon }} {{ city }}, {{ state }}</h2>
 
         {% if weather %}
-            <p><strong>Last Updated:</strong> {{ weather[0] }}</p>
+            <p><strong>Last Updated:</strong> {{ last_updated }}</p>
         {% endif %}
 
         <p><strong>Status:</strong> {{ status_text }}</p>
     </div>
 
-    <div class="card">
-        <h2>Service Status</h2>
-        <p>
-            Last Weather Update:
-            {{ last_update }}
-        </p>
-    </div>
-
+    <!------------------------------------------ Summary Grid ----------------------------------------------->
     <div class="summary-grid">
 
         <div class="summary-card">
@@ -175,6 +172,7 @@
 
     </div>
 
+    <!------------------------------------------ Recent Alerts ------------------------------------------------->
     <div class="card">
         <h2>Recent Alerts</h2>
 
@@ -189,6 +187,7 @@
         {% endfor %}
     </div>
 
+    <!------------------------------------------ Today's Statistics ------------------------------------------------->
     <div class="card">
         <h2>Today's Statistics</h2>
 
@@ -240,16 +239,19 @@
         </p>
     </div>
 
+    <!------------------------------------------ Forecast Temperature ------------------------------------------------->
     <div class="card">
         <h2>Forecast Temperature</h2>
         <canvas id="forecastTempChart"></canvas>
     </div>
 
+    <!------------------------------------------ Forecast Rain Chance ------------------------------------------------->
     <div class="card">
         <h2>Forecast Rain Chance</h2>
         <canvas id="forecastRainChart"></canvas>
     </div>
 
+    <!------------------------------------------ 24-Hour Forecast ------------------------------------------------->
     <div class="card">
         <h2>24-Hour Forecast</h2>
 
@@ -263,32 +265,35 @@
 
             {% for item in forecast %}
                 <tr>
-                    <td>{{ item[0].split("T")[1] }}</td>
-                    <td>{{ item[1] }}°F</td>
-                    <td>{{ item[2] }}%</td>
-                    <td>{{ item[3] }}</td>
+                    <td>{{ item.time }}</td>
+                    <td>{{ item.temp }}°F</td>
+                    <td>{{ item.rain }}%</td>
+                    <td>{{ item.condition }}</td>
                 </tr>
             {% endfor %}
         </table>
     </div>
 
-
+    <!------------------------------------------ Temperature History ------------------------------------------------->
     <div class="card">
         <h2>Temperature History</h2>
 
         <canvas id="temperatureChart"></canvas>
     </div>
 
+    <!------------------------------------------ Wind Speed History ------------------------------------------------->
     <div class="card">
         <h2>Wind Speed History</h2>
         <canvas id="windChart"></canvas>
     </div>
 
+    <!------------------------------------------ Precipitation History ------------------------------------------------->
     <div class="card">
         <h2>Precipitation History</h2>
         <canvas id="precipitationChart"></canvas>
     </div>
 
+    <!------------------------------------------ Temperature History Chart ------------------------------------------------->
    <script>
     const labels = {{ labels | tojson }};
     const temperatures = {{ temperatures | tojson }};
@@ -315,6 +320,8 @@
     );
     </script>
 
+
+    <!------------------------------------------ Wind Speed History And Precipitation Charts ------------------------------------------------->
     <script>
     const windSpeeds = {{ wind_speeds | tojson }};
     const precipitations = {{ precipitations | tojson }};
@@ -354,6 +361,7 @@
     );
     </script>
 
+    <!------------------------------------------ Forecast Temperature Chart ------------------------------------------------->
     <script>
     const forecastLabels = {{ forecast_labels | tojson }};
     const forecastTemps = {{ forecast_temps | tojson }};
@@ -376,6 +384,7 @@
     );
     </script>
 
+    <!------------------------------------------ Forecast Rain Chance Chart ------------------------------------------------->
     <script>
     const forecastRain = {{ forecast_rain | tojson }};
 

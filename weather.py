@@ -1,5 +1,6 @@
 import requests
 from config import CITY, STATE, COUNTRY
+from datetime import datetime
 
 WEATHER_CODES = {
     0: "Clear Sky",
@@ -29,27 +30,38 @@ def get_forecast():
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={latitude}"
         f"&longitude={longitude}"
+        "&current=temperature_2m"
         "&hourly=temperature_2m,precipitation_probability,weather_code"
         "&temperature_unit=fahrenheit"
-        "&forecast_days=1"
+        "&forecast_days=2"
+        "&timezone=auto"
     )
 
     response = requests.get(url)
     response.raise_for_status()
 
-    data = response.json()["hourly"]
+    json_data = response.json()
+
+    current_time = datetime.fromisoformat(json_data["current"]["time"])
+    data = json_data["hourly"]
 
     forecast = []
 
-    for i in range(min(24, len(data["time"]))):
-        code = data["weather_code"][i]
+    for i in range(len(data["time"])):
+        forecast_time = datetime.fromisoformat(data["time"][i])
 
-        forecast.append({
-            "time": data["time"][i],
-            "temperature": data["temperature_2m"][i],
-            "precipitation_probability": data["precipitation_probability"][i],
-            "condition": WEATHER_CODES.get(code, f"Unknown ({code})")
-        })
+        if forecast_time >= current_time:
+            code = data["weather_code"][i]
+
+            forecast.append({
+                "time": data["time"][i],
+                "temperature": data["temperature_2m"][i],
+                "precipitation_probability": data["precipitation_probability"][i],
+                "condition": WEATHER_CODES.get(code, f"Unknown ({code})")
+            })
+
+        if len(forecast) == 24:
+            break
 
     return forecast
 

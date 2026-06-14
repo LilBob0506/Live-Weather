@@ -16,6 +16,16 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
+def format_timestamp(timestamp):
+    if not timestamp:
+        return ""
+
+    dt = datetime.fromisoformat(timestamp)
+
+    return dt.strftime("%m/%d/%Y %I:%M %p").lstrip("0")
+
+
 def get_weather_history_table():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -33,10 +43,20 @@ def get_weather_history_table():
     """)
 
     rows = cursor.fetchall()
-
     conn.close()
 
-    return rows
+    readings = []
+
+    for row in rows:
+        readings.append({
+            "timestamp": format_timestamp(row[0]),
+            "temperature": row[1],
+            "condition": row[2],
+            "wind_speed": row[3],
+            "precipitation": row[4],
+        })
+
+    return readings
 
 
 def get_all_alerts():
@@ -56,7 +76,7 @@ def get_all_alerts():
 
     for timestamp, title, message in rows:
         alerts.append({
-            "timestamp": timestamp,
+            "timestamp": format_timestamp(timestamp),
             "title": title,
             "message": message,
             "severity": get_alert_severity(message)
@@ -78,10 +98,10 @@ def get_forecast_chart_data(forecast):
     rain_chances = []
 
     for row in forecast:
-        timestamp = datetime.fromisoformat(row[0])
+        dt = datetime.fromisoformat(row[0])
 
         labels.append(
-            timestamp.strftime("%I %p").lstrip("0")
+            dt.strftime("%I %p").lstrip("0")
         )
 
         temperatures.append(row[1])
@@ -268,10 +288,21 @@ def get_weather_history():
 
     rows.reverse()
 
-    labels = [row[0] for row in rows]
-    temperatures = [row[1] for row in rows]
-    wind_speeds = [row[2] for row in rows]
-    precipitations = [row[3] for row in rows]
+    labels = []
+    temperatures = []
+    wind_speeds = []
+    precipitations = []
+
+    for row in rows:
+        dt = datetime.fromisoformat(row[0])
+
+        labels.append(
+            dt.strftime("%I:%M %p").lstrip("0")
+        )
+
+        temperatures.append(row[1])
+        wind_speeds.append(row[2])
+        precipitations.append(row[3])
 
     return labels, temperatures, wind_speeds, precipitations
 
@@ -311,7 +342,7 @@ def get_recent_alerts():
 
     for timestamp, title, message in rows:
         alerts.append({
-            "timestamp": timestamp,
+            "timestamp": format_timestamp(timestamp),
             "title": title,
             "message": message,
             "severity": get_alert_severity(message)
@@ -323,6 +354,8 @@ def get_recent_alerts():
 @app.get("/")
 def dashboard(request: Request):
     latest_weather = get_latest_weather()
+    last_updated = format_timestamp(latest_weather[0]) if latest_weather else ""
+
     weather_icon = get_weather_icon(latest_weather[2]) if latest_weather else "🌡️"
     recent_alerts = get_recent_alerts()
 
@@ -333,6 +366,18 @@ def dashboard(request: Request):
     forecast_labels, forecast_temps, forecast_rain = get_forecast_chart_data(forecast)
     last_update = get_last_update()
     status_text = get_status_text(weather_stale)
+
+    formatted_forecast = []
+
+    for row in forecast:
+        dt = datetime.fromisoformat(row[0])
+
+        formatted_forecast.append({
+            "time": dt.strftime("%I:%M %p").lstrip("0"),
+            "temp": row[1],
+            "rain": row[2],
+            "condition": row[3]
+        })
 
     return templates.TemplateResponse(
         request=request,
@@ -346,7 +391,7 @@ def dashboard(request: Request):
             "precipitations": precipitations,
             "weather_stale": weather_stale,
             "stats": stats,
-            "forecast": forecast,
+            "forecast": formatted_forecast,
             "last_update": last_update,
             "weather_icon": weather_icon,
             "forecast_labels": forecast_labels,
@@ -355,6 +400,7 @@ def dashboard(request: Request):
             "city": CITY,
             "state": STATE,
             "status_text": status_text,
+            "last_updated": last_updated,
         }
     )
 

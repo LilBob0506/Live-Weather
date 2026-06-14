@@ -86,6 +86,9 @@ def main():
             )
 
         previous_weather = current_weather
+        
+        forecast = get_forecast()
+        save_forecast(forecast)
 
 
 if __name__ == "__main__":
